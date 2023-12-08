@@ -17,16 +17,19 @@ def enrol():
             l_pseudo = request.form['pseudo']
             l_exclude = request.form['exclude']
             try :
+                # Check si offre à sois meme
                 if l_realname == l_exclude:
                     l_error = "Evidement que tu vas pas t'offrir un cadeau à toi même, boulet !"
                     raise AssertionError
-                l_query = str("SELECT family FROM people WHERE name = 'xxx_realname_xxx'").replace('xxx_realname_xxx', l_realname)
-                l_family = db(l_query)[0][0]
-                l_query = str("SELECT family FROM people WHERE name = 'xxx_exclude_xxx'").replace('xxx_exclude_xxx', l_exclude)
-                l_excludeFamily = db(l_query)[0][0]
-                if l_family == l_excludeFamily:
-                    l_error = "Vous êtes déja dans la même famille"
-                    raise AssertionError
+                # Check si offre à un membre de la même famille
+                if l_exclude != '':
+                    l_query = str("SELECT family FROM people WHERE name = 'xxx_realname_xxx'").replace('xxx_realname_xxx', l_realname)
+                    l_family = db(l_query)[0][0]
+                    l_query = str("SELECT family FROM people WHERE name = 'xxx_exclude_xxx'").replace('xxx_exclude_xxx', l_exclude)
+                    l_excludeFamily = db(l_query)[0][0]
+                    if l_family == l_excludeFamily:
+                        l_error = "Vous êtes déja dans la même famille"
+                        raise AssertionError
                 # On ajoute le pseudo
                 l_query = str("""UPDATE people
                                  SET pseudo = 'xxx_pseudo_xxx'
