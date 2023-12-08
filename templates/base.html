@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<title>Secret Santa</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/w3.css') }}">
+<body>
+  <div class="w3-bar w3-teal" id="menuBar">
+    <a href="/enrol/" class="w3-bar-item w3-button w3-mobile">S'ajouter à la liste</a>
+    <a href="/list/" class="w3-bar-item w3-button w3-mobile">Voir la liste</a>
+    <a href="/result/" class="w3-bar-item w3-button w3-mobile">Tirage final !</a>
+  </div>
+  <div class="w3-container">
+    <h1>Secret Santa >> {% block title %}{% endblock %}</h1>
+    {% block content %}{% endblock %}
+  </div>
+  <div class="w3-container">
+    {% for message in get_flashed_messages() %}
+    <div class="w3-panel w3-pale-blue w3-border">
+      <p>{{ message }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

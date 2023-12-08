@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}A qui dois-je offrir mon cadeau ?{% endblock %}
+
+
+
+
+{% block content %}
+
+<table class="w3-table-all w3-hoverable" id="image-table">
+    <thead>
+        <tr>
+            <th>Pseudo</th>
+            <th>offre à</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for person in persons %}
+        <tr>
+            <td>{{ person[0] }}</td>
+            <td>{{ person[1] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
+
+
+
+
+
