@@ -8,20 +8,46 @@ app.secret_key = b'87qsv54j7sd887qsd684788ts6df58dy8757s57d7jh7n7v7q8'
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/enrol/', methods=['GET', 'POST']) # type: ignore
 def enrol():
+    l_error = ""
     if state() == 0:
         if request.method == 'GET':
-            return render_template('enrol.html', names = namesWithoutPseudo())
+            return render_template('enrol.html', namesWithoutPseudo = namesWithoutPseudo(), allNames = allNames())
         if request.method == 'POST':
             l_realname = request.form['realname']
             l_pseudo = request.form['pseudo']
+            l_exclude = request.form['exclude']
             try :
-                # l_query = str("INSERT INTO people ('name', 'pseudo') VALUES ('xxx_realname_xxx', 'xxx_pseudo_xxx')").replace('xxx_realname_xxx', l_realname).replace('xxx_pseudo_xxx', l_pseudo)
-                l_query = str("UPDATE people SET pseudo = 'xxx_pseudo_xxx' WHERE name = 'xxx_realname_xxx'").replace('xxx_realname_xxx', l_realname).replace('xxx_pseudo_xxx', l_pseudo)
+                if l_realname == l_exclude:
+                    l_error = "Evidement que tu vas pas t'offrir un cadeau à toi même, boulet !"
+                    raise AssertionError
+                l_query = str("SELECT family FROM people WHERE name = 'xxx_realname_xxx'").replace('xxx_realname_xxx', l_realname)
+                l_family = db(l_query)[0][0]
+                l_query = str("SELECT family FROM people WHERE name = 'xxx_exclude_xxx'").replace('xxx_exclude_xxx', l_exclude)
+                l_excludeFamily = db(l_query)[0][0]
+                if l_family == l_excludeFamily:
+                    l_error = "Vous êtes déja dans la même famille"
+                    raise AssertionError
+                # On ajoute le pseudo
+                l_query = str("""UPDATE people
+                                 SET pseudo = 'xxx_pseudo_xxx'
+                                 WHERE name = 'xxx_realname_xxx'""").replace('xxx_realname_xxx', l_realname).replace('xxx_pseudo_xxx', l_pseudo)
                 db(l_query)
+                # On ajoute l'exclude
+                if l_exclude != '':
+                    app.logger.info("Il y a un exclude")
+                    l_query = str("SELECT id FROM people WHERE name = 'xxx_exclude_xxx'").replace('xxx_exclude_xxx', l_exclude)
+                    l_excludeId = db(l_query)[0][0]
+                    print(l_excludeId)
+                    l_query = str("""UPDATE people
+                                     SET exclude = xxx_exclude_xxx
+                                     WHERE name = 'xxx_realname_xxx'""").replace('xxx_realname_xxx', l_realname).replace('xxx_exclude_xxx', str(l_excludeId))
+                    db(l_query) 
+                else:
+                    app.logger.info("Pas d'exclude")
             except:
                 app.logger.info('Query error')
-                flash('Pas possible, ma bonne dame...')
-                return render_template('enrol.html', names = namesWithoutPseudo())
+                flash('Pas possible, ma bonne dame ... ' + l_error)
+                return render_template('enrol.html', namesWithoutPseudo = namesWithoutPseudo(), allNames = allNames())
             else:
                 flash("C'est fait !")
                 return list()
@@ -38,7 +64,7 @@ def list():
 
 @app.route('/delete/<int:id>')
 def delete(id):
-    l_query = str("UPDATE people SET pseudo = NULL WHERE id = xxx_id_xxx").replace("xxx_id_xxx", str(id))
+    l_query = str("UPDATE people SET pseudo = NULL, exclude = NULL WHERE id = xxx_id_xxx").replace("xxx_id_xxx", str(id))
     db(l_query)
     return list()
 
@@ -57,14 +83,35 @@ def admin():
 @app.route('/do/<int:id>')
 def do(id):
     app.logger.info("Id : " + str(id))
+    # Tirage
     if id == 1:
         boggle()
-        return render_template('admin.html')
+        return result()
+    # Soft reset
+    elif id == 2:
+        softReset()
+        return list()
+    # Full reset
+    elif id == 3:
+        fullReset()
+        return list()
     
+def softReset():
+    l_query = "UPDATE people SET target = NULL"
+    db(l_query)
+    l_query = "UPDATE config set value = 0 WHERE key = 'state'"
+    db(l_query)
+
+def fullReset():
+    l_query = "UPDATE people SET target = NULL, pseudo = NULL, exclude = NULL"
+    db(l_query)
+    l_query = "UPDATE config set value = 0 WHERE key = 'state'"
+    db(l_query)
+
 def boggle():
     if state() != 0:
         return
-    l_query = "SELECT id, family FROM people"
+    l_query = "SELECT id, family, exclude FROM people"
     l_liste = db(l_query)
     app.logger.info("Avant boggle" + str(l_liste))
 
@@ -79,18 +126,18 @@ def boggle():
         # Mélanger la liste de manière aléatoire
         random.shuffle(l_data_copy)
         # Associer les id de manière aléatoire en respectant la contrainte de groupe
-        for id, family in l_data_copy:
-            available_ids = [other_id for other_id, other_family in l_data_copy if other_family != family and other_id not in l_allocations.values()]
+        for id, family, exclude in l_data_copy:
+            available_ids = [other_id for other_id, other_family, other_exclude in l_data_copy if other_family != family and other_id != exclude and other_id not in l_allocations.values()]
+            # available_ids = [other_id for other_id, other_family in l_data_copy if other_family != family and other_id not in l_allocations.values()]
             if available_ids:
                 allocated_id = random.choice(available_ids)
                 l_allocations[id] = allocated_id
-                l_data_copy = [(other_id, other_group) for other_id, other_group in l_data_copy if other_id != allocated_id]
+                l_data_copy = [(other_id, other_family, other_exclude) for other_id, other_family, other_exclude in l_data_copy if other_id != allocated_id]
             else:
                 print("Impossible de respecter la contrainte de groupe.")
                 l_failed = True
                 break
     
-
     app.logger.info(l_allocations)
     
     for l_id in l_allocations.keys():
@@ -107,11 +154,19 @@ def state():
     return int(db(l_query)[0][0])
 
 def namesWithoutPseudo():
-    l_query = "SELECT id, name FROM people WHERE pseudo IS NULL ORDER BY name"
+    l_query = "SELECT id, name, pseudo FROM people WHERE pseudo IS NULL ORDER BY name"
     return db(l_query)
 
 def namesWithPseudo():
-    l_query = "SELECT id, name, pseudo FROM people WHERE pseudo IS NOT NULL ORDER BY name"
+    l_query = """SELECT pp1.id, pp1.name, pp1.pseudo, pp2.name as exclude
+                 FROM people pp1
+                 LEFT JOIN people pp2 ON pp1.exclude = pp2.id
+                 WHERE pp1.pseudo IS NOT NULL
+                 ORDER BY pp1.name"""
+    return db(l_query)
+
+def allNames():
+    l_query = "SELECT id, name, pseudo FROM people ORDER BY name"
     return db(l_query)
 
 def associations():
@@ -133,13 +188,3 @@ def favicon():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
-
-
-
-
-

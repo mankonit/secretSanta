@@ -8,14 +8,16 @@
     <thead>
         <tr>
             <th>Nom</th>
-            <th></th>
+            <th>Pseudo</th>
+            <th>Ne veux pas offrir à</th>
         </tr>
     </thead>
     <tbody>
         {% for person in persons %}
         <tr>
             <td>{{ person[1] }}</td>
-            <td><a href="/delete/{{ person[0] }}" class="w3-button w3-teal w3-hover-red">Ré-initialiser le pseudo</a></td>
+            <td><a href="/delete/{{ person[0] }}" class="w3-button w3-teal w3-hover-red">Ré-initialiser</a></td>
+            <td>{{ person[3]|replace("None", "") }}</td>
         </tr>
         {% endfor %}
     </tbody>
