@@ -7,7 +7,7 @@
   <form class="w3-container w3-card-4 w3-section" method="post">
     
     <label class="w3-text-teal" for="realname"><b>Prénom</b></label>
-    <select class="w3-select" name="realname" id="realname">
+    <select class="w3-select" name="realname" id="realname" required>
       <option value=""></option>
       {% for name in namesWithoutPseudo %}
         <option value="{{ name[1] }}">{{ name[1] }}</option>
