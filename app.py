@@ -81,7 +81,14 @@ def result():
 
 @app.route('/admin/', methods=['GET', 'POST']) # type: ignore
 def admin():
-    return render_template('admin.html')
+    if request.method == 'GET':
+        return render_template('admin.html', year = currentYear())
+    if request.method == 'POST':
+        l_year = request.form['year']
+        flash("Année définie : " + str(l_year))
+        l_query = str("UPDATE config set value = xxx_year_xxx WHERE key = 'year'").replace('xxx_year_xxx', str(l_year))
+        db(l_query)
+        return render_template('admin.html', year = currentYear())
 
 @app.route('/do/<int:id>')
 def do(id):
@@ -156,6 +163,10 @@ def state():
     l_query = "SELECT value FROM config WHERE key = 'state'"
     return int(db(l_query)[0][0])
 
+def currentYear():
+    l_query = "SELECT value FROM config WHERE key = 'year'"
+    return int(db(l_query)[0][0])
+
 def namesWithoutPseudo():
     l_query = "SELECT id, name, pseudo FROM people WHERE pseudo IS NULL ORDER BY name"
     return db(l_query)
@@ -175,6 +186,8 @@ def allNames():
 def associations():
     l_query = "SELECT pp1.pseudo, pp2.name FROM people pp1 INNER JOIN people pp2 ON pp1.target = pp2.id ORDER BY pp1.pseudo"
     return db(l_query)
+
+
 
 def db(i_query):
     app.logger.info(i_query)

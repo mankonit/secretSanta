@@ -9,6 +9,11 @@
 <a href="/do/2" class="w3-button w3-red">/!\ Soft Reset /!\ »</a>
 <a href="/do/3" class="w3-button w3-red">/!\ FULL Reset /!\ »</a>
 
+<form class="w3-section" method="post">
+    <label class="w3-text-teal" for="year"><b>Année</b></label>
+    <input class="w3-input w3-border w3-light-grey" type="number" name="year" id="year" value="{{ year }}" required>
+    <input class="w3-button w3-section w3-teal w3-ripple" type="submit" value="Définir année »">
+</form>
 
   
 {% endblock %}
