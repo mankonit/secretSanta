@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, render_template, request, session, flash, send_from_directory, jsonify
 import os, sqlite3, random
 
@@ -85,8 +86,10 @@ def admin():
         return render_template('admin.html', year = currentYear())
     if request.method == 'POST':
         l_year = request.form['year']
-        flash("Année définie : " + str(l_year))
-        l_query = str("UPDATE config set value = xxx_year_xxx WHERE key = 'year'").replace('xxx_year_xxx', str(l_year))
+        flash("Données archivées pour " + str(l_year))
+        l_query = str("DELETE FROM archive WHERE year = xxx_year_xxx;").replace('xxx_year_xxx', str(l_year))
+        db(l_query)
+        l_query = str("INSERT INTO archive SELECT id, name, pseudo, family, exclude, target, xxx_year_xxx FROM people").replace('xxx_year_xxx', str(l_year))
         db(l_query)
         return render_template('admin.html', year = currentYear())
 
@@ -164,8 +167,7 @@ def state():
     return int(db(l_query)[0][0])
 
 def currentYear():
-    l_query = "SELECT value FROM config WHERE key = 'year'"
-    return int(db(l_query)[0][0])
+    return datetime.now().year
 
 def namesWithoutPseudo():
     l_query = "SELECT id, name, pseudo FROM people WHERE pseudo IS NULL ORDER BY name"
