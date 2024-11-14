@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}C'était comment les coups d'avant déja ?{% endblock %}
+
+
+{% block content %}
+
+<form class="w3-section" method="post">
+    <label class="w3-text-teal" for="year"><b>Voir les résultats de l'année :</b></label>
+    <input class="w3-input w3-border w3-light-grey" type="number" name="year" id="year" value={{ year }} required>
+    <input class="w3-button w3-section w3-teal w3-ripple" type="submit" value="Valider »">
+</form>
+
+{% if populated %}
+
+<h2>En {{ year }} :</h2>
+
+<table class="w3-table-all w3-hoverable" id="image-table">
+    <thead>
+        <tr>
+            <th></th>
+            <th>Ne voulait pas offrir à</th>
+            <th>Et avait finalement offert à</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for person in persons %}
+        <tr>
+            <td>{{ person[0] }}</td>
+            <td>{{ (person[1]|string).replace("None", "-") }}</td>
+            <td>{{ person[2] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% else %}
+
+<h2>Pas de résultat disponible pour l'année {{ year }}</h2>
+
+{% endif %}
+
+{% endblock %}
+
+
+
+
+
