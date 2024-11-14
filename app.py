@@ -66,7 +66,7 @@ def list():
         return render_template('notyet.html')
     
 
-@app.route('/delete/<int:id>')
+@app.route('/delete/<int:id>/')
 def delete(id):
     l_query = str("UPDATE people SET pseudo = NULL, exclude = NULL WHERE id = xxx_id_xxx").replace("xxx_id_xxx", str(id))
     db(l_query)
@@ -79,21 +79,33 @@ def result():
     else:
         return render_template('result.html', persons = associations())
 
+@app.route('/archive/', methods=['GET', 'POST'])
+def archive():
+    if request.method == 'GET':
+        l_year = currentYear()-1
+    if request.method == 'POST':
+        l_year = request.form['year']
+    l_persons = resultForYear(l_year)
+    if len(l_persons) > 0:
+        return render_template('archive.html', year = l_year, populated = True, persons = l_persons)
+    else :
+        return render_template('archive.html', year = l_year, populated = False)
 
 @app.route('/admin/', methods=['GET', 'POST']) # type: ignore
 def admin():
-    if request.method == 'GET':
-        return render_template('admin.html', year = currentYear())
     if request.method == 'POST':
-        l_year = request.form['year']
-        flash("Données archivées pour " + str(l_year))
-        l_query = str("DELETE FROM archive WHERE year = xxx_year_xxx;").replace('xxx_year_xxx', str(l_year))
-        db(l_query)
-        l_query = str("INSERT INTO archive SELECT id, name, pseudo, family, exclude, target, xxx_year_xxx FROM people").replace('xxx_year_xxx', str(l_year))
-        db(l_query)
-        return render_template('admin.html', year = currentYear())
+        if state() == 1:
+            l_year = request.form['year']
+            flash("Données archivées pour " + str(l_year))
+            l_query = str("DELETE FROM archive WHERE year = xxx_year_xxx;").replace('xxx_year_xxx', str(l_year))
+            db(l_query)
+            l_query = str("INSERT INTO archive SELECT id, name, pseudo, family, exclude, target, xxx_year_xxx FROM people").replace('xxx_year_xxx', str(l_year))
+            db(l_query)
+        else:
+            flash("Tirage non effectué -> ne peut pas être archivé")
+    return render_template('admin.html', year = currentYear())
 
-@app.route('/do/<int:id>')
+@app.route('/do/<int:id>/')
 def do(id):
     app.logger.info("Id : " + str(id))
     # Tirage
@@ -189,7 +201,13 @@ def associations():
     l_query = "SELECT pp1.pseudo, pp2.name FROM people pp1 INNER JOIN people pp2 ON pp1.target = pp2.id ORDER BY pp1.pseudo"
     return db(l_query)
 
-
+def resultForYear(i_year):
+    l_query = str("""SELECT p1.name, p3.name, p2.name
+                 FROM archive p1
+                 JOIN archive p2 ON p1.target = p2.id AND p2.year = xxx_year_xxx
+                 LEFT JOIN archive p3 ON p1.exclude = p3.id AND p3.year = xxx_year_xxx
+                 WHERE p1.year = xxx_year_xxx""").replace("xxx_year_xxx", str(i_year))
+    return db(l_query)
 
 def db(i_query):
     app.logger.info(i_query)
